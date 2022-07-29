@@ -11,3 +11,6 @@ pub mod widgets;
 /// A declarative TUI framework
 #[cfg(feature = "framework")]
 pub mod framework;
+
+#[cfg(test)]
+mod tests;

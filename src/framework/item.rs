@@ -1,10 +1,10 @@
-use std::{error::Error, io::Stdout};
+use std::io::Stdout;
 
 use crossterm::event::KeyEvent;
 use dyn_clone::DynClone;
 use tui::{backend::CrosstermBackend, layout::Rect, Frame};
 
-use super::FrameworkClean;
+use super::{FrameworkClean, ItemInfo};
 
 /// Trait every item on `State` should implment
 ///
@@ -17,22 +17,21 @@ pub trait FrameworkItem: DynClone {
     }
 
     /// Select the item, if `Ok(())` is return means select is successful, or else it failed
-    fn select(&mut self, framework: &FrameworkClean) -> Result<(), Box<dyn Error>> {
-        Ok(())
+    fn select(&mut self, framework: &FrameworkClean) -> bool {
+        true
     }
 
     /// Deselect the item, if `Ok(())` is return means deselect is successful, or else it failed
-    fn deselect(&mut self, framework: &FrameworkClean) -> Result<(), Box<dyn Error>> {
-        Ok(())
+    fn deselect(&mut self, framework: &FrameworkClean) -> bool {
+        true
     }
     fn render(
         &mut self,
         frame: &mut Frame<CrosstermBackend<Stdout>>,
         framework: &FrameworkClean,
         area: Rect,
-        selected: bool,
-        hover: bool,
         popup_render: bool,
+        info: ItemInfo,
     ) {
     }
 
@@ -41,4 +40,10 @@ pub trait FrameworkItem: DynClone {
 
     /// Handles key event
     fn key_event(&mut self, framework: FrameworkClean, key: KeyEvent) {}
+}
+
+impl Clone for Box<dyn FrameworkItem> {
+    fn clone(&self) -> Self {
+        *dyn_clone::clone_box(&*self)
+    }
 }

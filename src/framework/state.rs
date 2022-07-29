@@ -1,7 +1,8 @@
 use super::{FrameworkError, FrameworkItem};
-use tui::layout::Constraint;
+use tui::layout::{Constraint, Direction, Layout, Rect};
 
 /// Contains an item
+#[derive(Clone)]
 pub struct RowItem {
     /// The actual item Boxed
     pub item: Box<dyn FrameworkItem>,
@@ -10,6 +11,7 @@ pub struct RowItem {
 }
 
 /// Contains a row of objects
+#[derive(Clone)]
 pub struct Row {
     /// All the items in the row
     pub items: Vec<RowItem>,
@@ -20,6 +22,7 @@ pub struct Row {
 }
 
 /// Contains the items and the layout of the TUI
+#[derive(Clone)]
 pub struct State(pub Vec<Row>);
 
 impl State {
@@ -43,6 +46,66 @@ impl State {
         });
 
         selectables
+    }
+
+    /// Return chunks as 2D array of rects
+    pub fn get_chunks(&self, area: Rect) -> Vec<Vec<Rect>> {
+        // chunks
+        let mut row_constraints = vec![Constraint::Length(0)];
+        row_constraints.extend(self.0.iter().map(|row| row.height));
+        row_constraints.push(Constraint::Length(0));
+
+        let row_constraints_length = row_constraints.len() - 2;
+
+        let rows = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(row_constraints)
+            .split(area)
+            .into_iter()
+            .skip(1)
+            .take(row_constraints_length)
+            .collect::<Vec<_>>();
+
+        let constraints = self
+            .0
+            .iter()
+            .map(|row| {
+                let begin_length = if row.centered {
+                    Constraint::Length(
+                        (area.width
+                            - row
+                                .items
+                                .iter()
+                                .map(|item| item.width.apply(area.width))
+                                .sum::<u16>())
+                            / 2,
+                    )
+                } else {
+                    Constraint::Length(0)
+                };
+
+                let mut out = vec![begin_length];
+                out.extend(row.items.iter().map(|item| item.width));
+                out.push(Constraint::Length(0));
+                out
+            })
+            .collect::<Vec<_>>();
+
+        rows.into_iter()
+            .zip(constraints.into_iter())
+            .map(|(row_chunk, constraints)| {
+                let constraints_length = constraints.len() - 2;
+
+                Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints(constraints)
+                    .split(row_chunk)
+                    .into_iter()
+                    .skip(1)
+                    .take(constraints_length)
+                    .collect()
+            })
+            .collect::<Vec<_>>()
     }
 
     /// Get reference to item with x and y value
@@ -109,14 +172,18 @@ impl CursorState {
 
     pub fn hover(&self, selectables: &Vec<Vec<(usize, usize)>>) -> Option<(usize, usize)> {
         match self {
-            Self::Hover(x, y) if selectables.len() != 0 => Some(Self::selectables_to_coors(&selectables, (*x, *y))),
+            Self::Hover(x, y) if selectables.len() != 0 => {
+                Some(Self::selectables_to_coors(&selectables, (*x, *y)))
+            }
             _ => None,
         }
     }
 
     pub fn selected(&self, selectables: &Vec<Vec<(usize, usize)>>) -> Option<(usize, usize)> {
         match self {
-            Self::Selected(x, y) if selectables.len() != 0 => Some(Self::selectables_to_coors(&selectables, (*x, *y))),
+            Self::Selected(x, y) if selectables.len() != 0 => {
+                Some(Self::selectables_to_coors(&selectables, (*x, *y)))
+            }
             _ => None,
         }
     }
@@ -135,14 +202,14 @@ impl CursorState {
     /// Move in the corresponding direction
     pub fn r#move(
         &mut self,
-        direction: Direction,
+        direction: FrameworkDirection,
         selectables: &Vec<Vec<(usize, usize)>>,
     ) -> Result<(), FrameworkError> {
         match direction {
-            Direction::Up => self.up(),
-            Direction::Down => self.down(),
-            Direction::Left => self.left(),
-            Direction::Right => self.right(),
+            FrameworkDirection::Up => self.up(),
+            FrameworkDirection::Down => self.down(),
+            FrameworkDirection::Left => self.left(),
+            FrameworkDirection::Right => self.right(),
         }?;
 
         self.move_check(selectables);
@@ -221,9 +288,17 @@ impl CursorState {
 }
 
 #[derive(Clone, Copy)]
-pub enum Direction {
+pub enum FrameworkDirection {
     Up,
     Down,
     Left,
     Right,
+}
+
+#[derive(Clone, Copy)]
+pub struct ItemInfo {
+    pub selected: bool,
+    pub hover: bool,
+    pub x: usize,
+    pub y: usize,
 }

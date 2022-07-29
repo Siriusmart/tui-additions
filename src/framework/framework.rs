@@ -1,25 +1,22 @@
 use std::{error::Error, fmt::Display, io::Stdout};
 
 use crossterm::event::KeyEvent;
-use tui::{
-    backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout, Rect},
-    Frame,
-};
-use typemap::TypeMap;
+use tui::{backend::CrosstermBackend, layout::Rect, Frame};
+use typemap::{CloneMap, TypeMap};
 
-use super::{CursorState, Direction as MoveDirection, FrameworkClean, State};
+use super::{CursorState, FrameworkClean, FrameworkDirection, ItemInfo, State};
 
 /// Struct for a declarative TUI framework
 ///
 /// Copy & paste examples can be found
 /// [here](https://github.com/siriusmart/tui-additions/tree/master/examples/framework)
 
+#[derive(Clone)]
 pub struct Framework {
     /// Selectable items, auto generated when `state` is set with `new()` or `set_state()`
     pub selectables: Vec<Vec<(usize, usize)>>,
     /// Global data store for the framework
-    pub data: TypeMap,
+    pub data: CloneMap,
     /// Defines the layout of items on screen
     pub state: State,
     /// The state and position of cursor
@@ -31,7 +28,7 @@ impl Framework {
     pub fn new(state: State) -> Self {
         Self {
             selectables: state.selectables(),
-            data: TypeMap::new(),
+            data: TypeMap::custom(),
             state,
             cursor: CursorState::default(),
         }
@@ -47,64 +44,7 @@ impl Framework {
     pub fn render(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>) {
         let area = frame.size();
 
-        // chunks
-        let mut row_constraints = vec![Constraint::Length(0)];
-        row_constraints.extend(self.state.0.iter().map(|row| row.height));
-        row_constraints.push(Constraint::Length(0));
-
-        let row_constraints_length = row_constraints.len() - 2;
-
-        let rows = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(row_constraints)
-            .split(area)
-            .into_iter()
-            .skip(1)
-            .take(row_constraints_length)
-            .collect::<Vec<_>>();
-
-        let constraints = self
-            .state
-            .0
-            .iter()
-            .map(|row| {
-                let begin_length = if row.centered {
-                    Constraint::Length(
-                        (area.width
-                            - row
-                                .items
-                                .iter()
-                                .map(|item| Self::constraint_to_length(item.width, area.width))
-                                .sum::<u16>())
-                            / 2,
-                    )
-                } else {
-                    Constraint::Length(0)
-                };
-
-                let mut out = vec![begin_length];
-                out.extend(row.items.iter().map(|item| item.width));
-                out.push(Constraint::Length(0));
-                out
-            })
-            .collect::<Vec<_>>();
-
-        let chunks = rows
-            .into_iter()
-            .zip(constraints.into_iter())
-            .map(|(row_chunk, constraints)| {
-                let constraints_length = constraints.len() - 2;
-
-                Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints(constraints)
-                    .split(row_chunk)
-                    .into_iter()
-                    .skip(1)
-                    .take(constraints_length)
-                    .collect()
-            })
-            .collect::<Vec<_>>();
+        let chunks = self.state.get_chunks(area);
 
         let selected = self.cursor.selected(&self.selectables);
         let hover = self.cursor.hover(&self.selectables);
@@ -133,12 +73,77 @@ impl Framework {
                     frame,
                     &frameworkclean,
                     *item_chunk,
-                    Some((x, y)) == selected,
-                    Some((x, y)) == hover,
+                    // Some((x, y)) == selected,
+                    // Some((x, y)) == hover,
                     popup_render,
+                    ItemInfo {
+                        selected: Some((x, y)) == selected,
+                        hover: Some((x, y)) == hover,
+                        x,
+                        y,
+                    },
                 );
             }
         }
+    }
+
+    /// Render only one item
+    pub fn render_only(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, x: usize, y: usize) {
+        let chunk = self.state.get_chunks(frame.size())[y][x];
+
+        let selected = self.cursor.selected(&self.selectables);
+        let hover = self.cursor.hover(&self.selectables);
+
+        self.render_only_raw(frame, x, y, chunk, false, selected, hover);
+        self.render_only_raw(frame, x, y, chunk, true, selected, hover);
+    }
+
+    /// Render multiple items
+    ///
+    /// Location is in a format of `Vec<(x, y)>`
+    pub fn render_only_multiple(
+        &mut self,
+        frame: &mut Frame<CrosstermBackend<Stdout>>,
+        locations: &Vec<(usize, usize)>,
+    ) {
+        let chunks = self.state.get_chunks(frame.size());
+
+        let selected = self.cursor.selected(&self.selectables);
+        let hover = self.cursor.hover(&self.selectables);
+
+        locations.iter().for_each(|(x, y)| {
+            self.render_only_raw(frame, *x, *y, chunks[*y][*x], false, selected, hover);
+        });
+
+        locations.iter().for_each(|(x, y)| {
+            self.render_only_raw(frame, *x, *y, chunks[*y][*x], true, selected, hover);
+        });
+    }
+
+    /// Render only with more controls
+    pub fn render_only_raw(
+        &mut self,
+        frame: &mut Frame<CrosstermBackend<Stdout>>,
+        x: usize,
+        y: usize,
+        chunk: Rect,
+        popup_render: bool,
+        selected: Option<(usize, usize)>,
+        hover: Option<(usize, usize)>,
+    ) {
+        let (frameworkclean, state) = self.split_clean();
+        state.get_mut(x, y).render(
+            frame,
+            &frameworkclean,
+            chunk,
+            popup_render,
+            ItemInfo {
+                selected: selected == Some((x, y)),
+                hover: hover == Some((x, y)),
+                x,
+                y,
+            },
+        )
     }
 
     /// Send key input to selected object, returns an `Err(())` when no objct is selected
@@ -153,25 +158,19 @@ impl Framework {
             Err(())
         }
     }
+}
 
+impl Framework {
     /// Split `Framework` into `FrameworkClean` and `&mut State`
     pub fn split_clean(&mut self) -> (FrameworkClean<'_>, &mut State) {
         self.into()
-    }
-
-    fn constraint_to_length(constraint: Constraint, length_to_split: u16) -> u16 {
-        match constraint {
-            Constraint::Min(width) | Constraint::Length(width) => width,
-            Constraint::Percentage(percentage) => length_to_split * percentage / 100,
-            _ => unimplemented!("max or ration cannot be converted to a fixed length"),
-        }
     }
 }
 
 impl Framework {
     /// Move cursor in corresponding direction, will return an `Err(E)` if something is selected
     /// and the cursor is not free to move around
-    pub fn r#move(&mut self, direction: MoveDirection) -> Result<(), FrameworkError> {
+    pub fn r#move(&mut self, direction: FrameworkDirection) -> Result<(), FrameworkError> {
         self.cursor.r#move(direction, &self.selectables)
     }
 
@@ -180,8 +179,9 @@ impl Framework {
         if let Some((x, y)) = self.cursor.hover(&self.selectables) {
             let (frameworkclean, state) = self.split_clean();
             let item = state.get_mut(x, y);
-            item.select(&frameworkclean)?;
-            self.cursor.select()?;
+            if item.select(&frameworkclean) {
+                self.cursor.select()?;
+            }
         } else {
             Err(FrameworkError::CursorStateMismatch)?;
         }
@@ -194,8 +194,9 @@ impl Framework {
         if let Some((x, y)) = self.cursor.selected(&self.selectables) {
             let (frameworkclean, state) = self.split_clean();
             let item = state.get_mut(x, y);
-            item.deselect(&frameworkclean)?;
-            self.cursor.deselect()?;
+            if item.deselect(&frameworkclean) {
+                self.cursor.deselect()?;
+            }
         } else {
             Err(FrameworkError::CursorStateMismatch)?;
         }
