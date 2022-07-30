@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use tui::{
-    style::{Style, Color},
+    style::{Color, Style},
     text::{Span, Spans},
     widgets::{Paragraph, Widget},
 };
@@ -9,7 +9,7 @@ use tui::{
 #[derive(Clone)]
 pub struct TextField {
     pub content: String,
-    pub wrap: TextFieldWrap,
+    pub scroll: usize,
     pub cursor: usize,
     pub style: Style,
     pub text_style: Style,
@@ -27,27 +27,26 @@ impl Widget for TextField {
             panic!("unknown width");
         }
 
-
         let cursor_at_end = self.cursor == self.content.len();
-        let text = match self.wrap {
-            TextFieldWrap::None(scroll) => {
-                let mut spans = vec![
-                    Span::styled(self.content[scroll..self.cursor].to_string(), self.text_style),
-                ];
+        let mut spans = vec![Span::styled(
+            self.content[self.scroll..self.cursor].to_string(),
+            self.text_style,
+        )];
 
-                if cursor_at_end {
-                    spans.push(Span::styled(String::from(' '), self.cursor_style));
-                } else {
-                    spans.push(Span::styled(self.content[self.cursor.. self.cursor + 1].to_string(), self.cursor_style));
-                    spans.push(Span::styled(self.content[self.cursor + 1 .. self.content.len()].to_string(), self.text_style));
-                }
+        if cursor_at_end {
+            spans.push(Span::styled(String::from(' '), self.cursor_style));
+        } else {
+            spans.push(Span::styled(
+                self.content[self.cursor..self.cursor + 1].to_string(),
+                self.cursor_style,
+            ));
+            spans.push(Span::styled(
+                self.content[self.cursor + 1..self.content.len()].to_string(),
+                self.text_style,
+            ));
+        }
 
-                Spans::from(spans)
-            },
-            // TextFieldWrap::Word(_) => unimplemented!(),
-        };
-
-        let paragraph = Paragraph::new(text).style(self.style);
+        let paragraph = Paragraph::new(Spans::from(spans)).style(self.style);
         paragraph.render(area, buf);
     }
 }
@@ -56,12 +55,12 @@ impl Default for TextField {
     fn default() -> Self {
         Self {
             content: String::default(),
-            wrap: TextFieldWrap::None(0),
+            scroll: 0,
             cursor: 0,
             style: Style::default(),
             text_style: Style::default(),
             cursor_style: Style::default().bg(Color::Gray),
-            width: None
+            width: None,
         }
     }
 }
@@ -118,32 +117,21 @@ impl TextField {
         self.width = Some(width)
     }
 
-    pub fn update(&mut self) -> Result<(), TextFieldError>{
+    pub fn update(&mut self) -> Result<(), TextFieldError> {
         let width = if let Some(width) = self.width {
-            width as usize
+            width
         } else {
-            return Err(TextFieldError::UnknownWidth)
+            return Err(TextFieldError::UnknownWidth);
         };
 
-        match &mut self.wrap {
-            TextFieldWrap::None(scroll) => {
-                if *scroll > self.cursor {
-                    *scroll = self.cursor;
-                } else if *scroll + width - 1 < self.cursor {
-                    *scroll = self.cursor - width + 1;
-                }
-            }
-            // TextFieldWrap::Word(_) => {}
+        if self.scroll > self.cursor {
+            self.scroll = self.cursor;
+        } else if self.scroll + width as usize - 1 < self.cursor {
+            self.scroll = self.cursor - width as usize + 1;
         }
 
         Ok(())
     }
-}
-
-#[derive(Clone, Copy)]
-pub enum TextFieldWrap {
-    r#None(usize),
-    // Word(usize),
 }
 
 #[derive(Debug)]
