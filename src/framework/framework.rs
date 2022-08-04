@@ -4,7 +4,7 @@ use crossterm::event::KeyEvent;
 use tui::{backend::CrosstermBackend, layout::Rect, Frame};
 use typemap::{CloneMap, TypeMap};
 
-use super::{CursorState, FrameworkClean, FrameworkDirection, ItemInfo, State};
+use super::{CursorState, FrameworkClean, FrameworkDirection, FrameworkHistory, ItemInfo, State};
 
 /// Struct for a declarative TUI framework
 ///
@@ -21,6 +21,78 @@ pub struct Framework {
     pub state: State,
     /// The state and position of cursor
     pub cursor: CursorState,
+    /// Stores saved states
+    pub history: Vec<FrameworkHistory>,
+}
+
+impl Framework {
+    /// Clears `self.history`
+    pub fn clear_history(&mut self) {
+        self.history.clear();
+    }
+
+    /// Save current state
+    pub fn push_history(&mut self) {
+        self.history.push(FrameworkHistory {
+            selectables: self.selectables.clone(),
+            data: Some(self.data.clone()),
+            state: self.state.clone(),
+            cursor: self.cursor.clone(),
+        });
+    }
+
+    /// Save current state, excluding `self.data`
+    pub fn push_history_no_data(&mut self) {
+        self.history.push(FrameworkHistory {
+            selectables: self.selectables.clone(),
+            data: None,
+            state: self.state.clone(),
+            cursor: self.cursor.clone(),
+        });
+    }
+
+    /// Removes the last history and returns it
+    pub fn pop_history(&mut self) -> Option<FrameworkHistory> {
+        self.history.pop()
+    }
+
+    /// Revert self to last save (if there is)
+    pub fn revert_last_history(&mut self) -> Result<(), FrameworkError> {
+        let history = match self.history.pop() {
+            None => return Err(FrameworkError::NoSuchSave),
+            Some(history) => {
+                history
+            }
+        };
+
+        self.selectables = history.selectables;
+        if let Some(data) = history.data {
+            self.data = data;
+        }
+        self.state = history.state;
+        self.cursor = history.cursor;
+
+        Ok(())
+    }
+
+    /// Revert self to history at index
+    pub fn revert_history(&mut self, index: usize) -> Result<(), FrameworkError> {
+        if index >= self.history.len() {
+            return Err(FrameworkError::NoSuchSave);
+        }
+
+        let history = self.history.remove(index);
+
+        self.selectables = history.selectables;
+        if let Some(data) = history.data {
+            self.data = data;
+        }
+        self.state = history.state;
+        self.cursor = history.cursor;
+
+        Ok(())
+        
+    }
 }
 
 impl Framework {
@@ -31,6 +103,7 @@ impl Framework {
             data: TypeMap::custom(),
             state,
             cursor: CursorState::default(),
+            history: Vec::new(),
         }
     }
 
@@ -208,8 +281,12 @@ impl Framework {
 /// Errors that may be returned by `Framework`
 #[derive(Debug)]
 pub enum FrameworkError {
+    /// Moving the cursor when something is selected (not allowed)
     MoveSelected,
+    /// Calling `self.select()` when not hovering and `self.deselect()` when nothing is selected
     CursorStateMismatch,
+    /// Not found in `self.history`, caused by incorrect index or `self.history` is empty
+    NoSuchSave,
 }
 
 impl Display for FrameworkError {

@@ -287,6 +287,7 @@ impl CursorState {
     }
 }
 
+/// Used to represent direction in this crate
 #[derive(Clone, Copy)]
 pub enum FrameworkDirection {
     Up,
@@ -295,6 +296,7 @@ pub enum FrameworkDirection {
     Right,
 }
 
+/// Passed into the `FrameworkItem` trait functions for info of the item
 #[derive(Clone, Copy)]
 pub struct ItemInfo {
     pub selected: bool,
