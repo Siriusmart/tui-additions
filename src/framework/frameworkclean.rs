@@ -1,10 +1,9 @@
-use super::{CursorState, Framework, State};
-use typemap::CloneMap;
+use super::{CursorState, Framework, State, FrameworkData};
 
 /// A version of `Framework` that does not include `State` and everything is a mutable reference
 pub struct FrameworkClean<'a> {
     pub selectables: &'a mut Vec<Vec<(usize, usize)>>,
-    pub data: &'a mut CloneMap,
+    pub data: &'a mut FrameworkData,
     pub cursor: &'a mut CursorState,
 }
 

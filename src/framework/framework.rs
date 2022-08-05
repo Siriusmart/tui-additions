@@ -2,9 +2,8 @@ use std::{error::Error, fmt::Display, io::Stdout};
 
 use crossterm::event::KeyEvent;
 use tui::{backend::CrosstermBackend, layout::Rect, Frame};
-use typemap::{CloneMap, TypeMap};
 
-use super::{CursorState, FrameworkClean, FrameworkDirection, FrameworkHistory, ItemInfo, State};
+use super::{CursorState, FrameworkClean, FrameworkDirection, FrameworkHistory, ItemInfo, State, FrameworkData};
 
 /// Struct for a declarative TUI framework
 ///
@@ -16,7 +15,7 @@ pub struct Framework {
     /// Selectable items, auto generated when `state` is set with `new()` or `set_state()`
     pub selectables: Vec<Vec<(usize, usize)>>,
     /// Global data store for the framework
-    pub data: CloneMap,
+    pub data: FrameworkData,
     /// Defines the layout of items on screen
     pub state: State,
     /// The state and position of cursor
@@ -35,17 +34,7 @@ impl Framework {
     pub fn push_history(&mut self) {
         self.history.push(FrameworkHistory {
             selectables: self.selectables.clone(),
-            data: Some(self.data.clone()),
-            state: self.state.clone(),
-            cursor: self.cursor.clone(),
-        });
-    }
-
-    /// Save current state, excluding `self.data`
-    pub fn push_history_no_data(&mut self) {
-        self.history.push(FrameworkHistory {
-            selectables: self.selectables.clone(),
-            data: None,
+            data: self.data.state.clone(),
             state: self.state.clone(),
             cursor: self.cursor.clone(),
         });
@@ -66,9 +55,7 @@ impl Framework {
         };
 
         self.selectables = history.selectables;
-        if let Some(data) = history.data {
-            self.data = data;
-        }
+        self.data.state = history.data;
         self.state = history.state;
         self.cursor = history.cursor;
 
@@ -84,9 +71,7 @@ impl Framework {
         let history = self.history.remove(index);
 
         self.selectables = history.selectables;
-        if let Some(data) = history.data {
-            self.data = data;
-        }
+        self.data.state = history.data;
         self.state = history.state;
         self.cursor = history.cursor;
 
@@ -100,7 +85,7 @@ impl Framework {
     pub fn new(state: State) -> Self {
         Self {
             selectables: state.selectables(),
-            data: TypeMap::custom(),
+            data: FrameworkData::default(),
             state,
             cursor: CursorState::default(),
             history: Vec::new(),
