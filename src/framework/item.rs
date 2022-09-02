@@ -17,18 +17,18 @@ pub trait FrameworkItem: DynClone {
     }
 
     /// Select the item, if `Ok(())` is return means select is successful, or else it failed
-    fn select(&mut self, framework: &FrameworkClean) -> bool {
+    fn select(&mut self, framework: &mut FrameworkClean) -> bool {
         true
     }
 
     /// Deselect the item, if `Ok(())` is return means deselect is successful, or else it failed
-    fn deselect(&mut self, framework: &FrameworkClean) -> bool {
+    fn deselect(&mut self, framework: &mut FrameworkClean) -> bool {
         true
     }
     fn render(
         &mut self,
         frame: &mut Frame<CrosstermBackend<Stdout>>,
-        framework: &FrameworkClean,
+        framework: &mut FrameworkClean,
         area: Rect,
         popup_render: bool,
         info: ItemInfo,
@@ -36,10 +36,10 @@ pub trait FrameworkItem: DynClone {
     }
 
     /// Runs when `Framework.load_item()` is called
-    fn load_item(&mut self, framework: &FrameworkClean) {}
+    fn load_item(&mut self, framework: &mut FrameworkClean) {}
 
     /// Handles key event
-    fn key_event(&mut self, framework: FrameworkClean, key: KeyEvent) {}
+    fn key_event(&mut self, framework: &mut FrameworkClean, key: KeyEvent) {}
 }
 
 impl Clone for Box<dyn FrameworkItem> {

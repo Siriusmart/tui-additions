@@ -121,7 +121,7 @@ impl Framework {
         hover: Option<(usize, usize)>,
         popup_render: bool,
     ) {
-        let (frameworkclean, state) = self.split_clean();
+        let (mut frameworkclean, state) = self.split_clean();
 
         for (y, (row, row_chunks)) in state.0.iter_mut().zip(chunks.iter()).enumerate() {
             for (x, (row_item, item_chunk)) in
@@ -129,7 +129,7 @@ impl Framework {
             {
                 row_item.item.render(
                     frame,
-                    &frameworkclean,
+                    &mut frameworkclean,
                     *item_chunk,
                     // Some((x, y)) == selected,
                     // Some((x, y)) == hover,
@@ -189,10 +189,10 @@ impl Framework {
         selected: Option<(usize, usize)>,
         hover: Option<(usize, usize)>,
     ) {
-        let (frameworkclean, state) = self.split_clean();
+        let (mut frameworkclean, state) = self.split_clean();
         state.get_mut(x, y).render(
             frame,
-            &frameworkclean,
+            &mut frameworkclean,
             chunk,
             popup_render,
             ItemInfo {
@@ -207,10 +207,10 @@ impl Framework {
     /// Send key input to selected object, returns an `Err(())` when no objct is selected
     pub fn key_input(&mut self, key: KeyEvent) -> Result<(), ()> {
         let selected = self.cursor.selected(&self.selectables);
-        let (frameworkclean, state) = self.split_clean();
+        let (mut frameworkclean, state) = self.split_clean();
 
         if let Some((x, y)) = selected {
-            state.get_mut(x, y).key_event(frameworkclean, key);
+            state.get_mut(x, y).key_event(&mut frameworkclean, key);
             Ok(())
         } else {
             Err(())
@@ -220,7 +220,7 @@ impl Framework {
 
 impl Framework {
     /// Split `Framework` into `FrameworkClean` and `&mut State`
-    pub fn split_clean(&mut self) -> (FrameworkClean<'_>, &mut State) {
+    pub fn split_clean(&mut self) -> (FrameworkClean, &mut State) {
         self.into()
     }
 }
@@ -235,9 +235,9 @@ impl Framework {
     /// Select the hovering item
     pub fn select(&mut self) -> Result<(), Box<dyn Error>> {
         if let Some((x, y)) = self.cursor.hover(&self.selectables) {
-            let (frameworkclean, state) = self.split_clean();
+            let (mut frameworkclean, state) = self.split_clean();
             let item = state.get_mut(x, y);
-            if item.select(&frameworkclean) {
+            if item.select(&mut frameworkclean) {
                 self.cursor.select()?;
             }
         } else {
@@ -250,9 +250,9 @@ impl Framework {
     /// Deselect the hovering item
     pub fn deselect(&mut self) -> Result<(), Box<dyn Error>> {
         if let Some((x, y)) = self.cursor.selected(&self.selectables) {
-            let (frameworkclean, state) = self.split_clean();
+            let (mut frameworkclean, state) = self.split_clean();
             let item = state.get_mut(x, y);
-            if item.deselect(&frameworkclean) {
+            if item.deselect(&mut frameworkclean) {
                 self.cursor.deselect()?;
             }
         } else {
