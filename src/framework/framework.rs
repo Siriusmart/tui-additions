@@ -81,6 +81,20 @@ impl Framework {
 }
 
 impl Framework {
+    pub fn is_selected(&self) -> bool {
+        self.cursor.is_selected()
+    }
+
+    pub fn is_hover(&self) -> bool {
+        self.cursor.is_hover()
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.cursor.is_none()
+    }
+}
+
+impl Framework {
     /// Create a new Framework struct
     pub fn new(state: State) -> Self {
         Self {

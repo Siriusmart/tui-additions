@@ -139,6 +139,28 @@ impl Default for CursorState {
 }
 
 impl CursorState {
+    pub fn is_selected(&self) -> bool {
+        if let Self::Selected(_, _) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_hover(&self) -> bool {
+        if let Self::Hover(_, _) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_none(&self) -> bool {
+        self == &Self::None
+    }
+}
+
+impl CursorState {
     /// Try select an item, will not work if an item is already selected or the cursor is not
     /// hovering on anything
     pub fn select(&mut self) -> Result<(), FrameworkError> {
