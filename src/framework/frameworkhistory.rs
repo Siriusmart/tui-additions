@@ -1,6 +1,6 @@
 use typemap::{CloneMap, TypeMap};
 
-use super::{CursorState, State, Framework, FrameworkData};
+use super::{CursorState, Framework, FrameworkData, State};
 
 /// Save state for Framework
 #[derive(Clone)]

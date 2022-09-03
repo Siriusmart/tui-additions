@@ -1,4 +1,4 @@
-use super::{CursorState, Framework, State, FrameworkData};
+use super::{CursorState, Framework, FrameworkData, State};
 
 /// A version of `Framework` that does not include `State` and everything is a mutable reference
 pub struct FrameworkClean<'a> {

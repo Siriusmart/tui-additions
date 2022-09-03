@@ -3,7 +3,10 @@ use std::{error::Error, fmt::Display, io::Stdout};
 use crossterm::event::KeyEvent;
 use tui::{backend::CrosstermBackend, layout::Rect, Frame};
 
-use super::{CursorState, FrameworkClean, FrameworkDirection, FrameworkHistory, ItemInfo, State, FrameworkData};
+use super::{
+    CursorState, FrameworkClean, FrameworkData, FrameworkDirection, FrameworkHistory, ItemInfo,
+    State,
+};
 
 /// Struct for a declarative TUI framework
 ///
@@ -49,9 +52,7 @@ impl Framework {
     pub fn revert_last_history(&mut self) -> Result<(), FrameworkError> {
         let history = match self.history.pop() {
             None => return Err(FrameworkError::NoSuchSave),
-            Some(history) => {
-                history
-            }
+            Some(history) => history,
         };
 
         self.selectables = history.selectables;
@@ -76,7 +77,6 @@ impl Framework {
         self.cursor = history.cursor;
 
         Ok(())
-        
     }
 }
 
@@ -219,16 +219,76 @@ impl Framework {
     }
 
     /// Send key input to selected object, returns an `Err(())` when no objct is selected
-    pub fn key_input(&mut self, key: KeyEvent) -> Result<(), ()> {
+    pub fn key_input(&mut self, key: KeyEvent) {
         let selected = self.cursor.selected(&self.selectables);
         let (mut frameworkclean, state) = self.split_clean();
 
         if let Some((x, y)) = selected {
-            state.get_mut(x, y).key_event(&mut frameworkclean, key);
-            Ok(())
-        } else {
-            Err(())
+            state.get_mut(x, y).key_event(
+                &mut frameworkclean,
+                key,
+                ItemInfo {
+                    selected: true,
+                    hover: false,
+                    x,
+                    y,
+                },
+            );
         }
+    }
+
+    pub fn load(&mut self) {
+        let selected = self.cursor.selected(&self.selectables);
+        let hover = self.cursor.hover(&self.selectables);
+        let (mut frameworkclean, state) = self.split_clean();
+
+        for (y, row) in state.0.iter_mut().enumerate() {
+            for (x, row_item) in row.items.iter_mut().enumerate() {
+                row_item.item.load_item(
+                    &mut frameworkclean,
+                    ItemInfo {
+                        selected: Some((x, y)) == selected,
+                        hover: Some((x, y)) == hover,
+                        x,
+                        y,
+                    },
+                );
+            }
+        }
+    }
+
+    pub fn load_only(&mut self, x: usize, y: usize) {
+        let selected = self.cursor.selected(&self.selectables);
+        let hover = self.cursor.hover(&self.selectables);
+        let (mut frameworkclean, state) = self.split_clean();
+
+        state.get_mut(x, y).load_item(
+            &mut frameworkclean,
+            ItemInfo {
+                selected: Some((x, y)) == selected,
+                hover: Some((x, y)) == hover,
+                x,
+                y,
+            },
+        );
+    }
+
+    pub fn load_only_multiple(&mut self, locations: &Vec<(usize, usize)>) {
+        let selected = self.cursor.selected(&self.selectables);
+        let hover = self.cursor.hover(&self.selectables);
+        let (mut frameworkclean, state) = self.split_clean();
+
+        locations.iter().for_each(|(x, y)| {
+            state.get_mut(*x, *y).load_item(
+                &mut frameworkclean,
+                ItemInfo {
+                    selected: Some((*x, *y)) == selected,
+                    hover: Some((*x, *y)) == hover,
+                    x: *x,
+                    y: *y,
+                },
+            );
+        })
     }
 }
 

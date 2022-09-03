@@ -1,5 +1,4 @@
 use std::io::Stdout;
-
 use crossterm::event::KeyEvent;
 use dyn_clone::DynClone;
 use tui::{backend::CrosstermBackend, layout::Rect, Frame};
@@ -36,10 +35,10 @@ pub trait FrameworkItem: DynClone {
     }
 
     /// Runs when `Framework.load_item()` is called
-    fn load_item(&mut self, framework: &mut FrameworkClean) {}
+    fn load_item(&mut self, framework: &mut FrameworkClean, info: ItemInfo) {}
 
     /// Handles key event
-    fn key_event(&mut self, framework: &mut FrameworkClean, key: KeyEvent) {}
+    fn key_event(&mut self, framework: &mut FrameworkClean, key: KeyEvent, info: ItemInfo) {}
 }
 
 impl Clone for Box<dyn FrameworkItem> {

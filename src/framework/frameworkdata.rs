@@ -17,9 +17,6 @@ impl Default for FrameworkData {
 
 impl From<(CloneMap, CloneMap)> for FrameworkData {
     fn from((global, state): (CloneMap, CloneMap)) -> Self {
-        Self {
-            global,
-            state,
-        }
+        Self { global, state }
     }
 }
