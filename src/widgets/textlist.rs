@@ -5,6 +5,7 @@ use tui::{
     style::Style,
     widgets::{Block, BorderType, Borders, Paragraph, Widget},
 };
+use unicode_segmentation::UnicodeSegmentation;
 
 /// A widget for selecting from a list of items
 ///
@@ -302,7 +303,8 @@ impl Widget for TextList {
         }
 
         if area.height < 3 {
-            panic!("insufficient height");
+            // panic!("insufficient height");
+            return;
         }
 
         self.items = self
@@ -343,8 +345,9 @@ impl Widget for TextList {
         }
 
         self.items.iter_mut().for_each(|item| {
-            if item.len() > width_from {
-                *item = format!("{}{}", &item[0..width_after], end_with);
+            let chars = UnicodeSegmentation::graphemes(item.as_str(), true).collect::<Vec<_>>();
+            if chars.len() > width_from {
+                *item = format!("{}{}", chars.into_iter().take(width_after).collect::<String>(), end_with);
             }
         });
 

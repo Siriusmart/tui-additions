@@ -219,7 +219,7 @@ impl Framework {
     }
 
     /// Send key input to selected object, returns an `Err(())` when no objct is selected
-    pub fn key_input(&mut self, key: KeyEvent) {
+    pub fn key_input(&mut self, key: KeyEvent) -> Result<(), Box<dyn Error>> {
         let selected = self.cursor.selected(&self.selectables);
         let (mut frameworkclean, state) = self.split_clean();
 
@@ -233,11 +233,13 @@ impl Framework {
                     x,
                     y,
                 },
-            );
+            )?;
         }
+
+        Ok(())
     }
 
-    pub fn load(&mut self) {
+    pub fn load(&mut self) -> Result<(), Box<dyn Error>> {
         let selected = self.cursor.selected(&self.selectables);
         let hover = self.cursor.hover(&self.selectables);
         let (mut frameworkclean, state) = self.split_clean();
@@ -252,12 +254,14 @@ impl Framework {
                         x,
                         y,
                     },
-                );
+                )?;
             }
         }
+
+        Ok(())
     }
 
-    pub fn load_only(&mut self, x: usize, y: usize) {
+    pub fn load_only(&mut self, x: usize, y: usize) -> Result<(), Box<dyn Error>> {
         let selected = self.cursor.selected(&self.selectables);
         let hover = self.cursor.hover(&self.selectables);
         let (mut frameworkclean, state) = self.split_clean();
@@ -270,7 +274,7 @@ impl Framework {
                 x,
                 y,
             },
-        );
+        )
     }
 
     pub fn load_only_multiple(&mut self, locations: &Vec<(usize, usize)>) {
@@ -279,7 +283,7 @@ impl Framework {
         let (mut frameworkclean, state) = self.split_clean();
 
         locations.iter().for_each(|(x, y)| {
-            state.get_mut(*x, *y).load_item(
+            let _ = state.get_mut(*x, *y).load_item(
                 &mut frameworkclean,
                 ItemInfo {
                     selected: Some((*x, *y)) == selected,

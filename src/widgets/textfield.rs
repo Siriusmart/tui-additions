@@ -83,6 +83,14 @@ impl TextField {
         Ok(Some(c))
     }
 
+    pub fn push(&mut self, c: char) -> Result<(), TextFieldError> {
+        self.insert(self.cursor, c)
+    }
+
+    pub fn pop(&mut self) -> Result<Option<char>, TextFieldError> {
+        self.remove(self.cursor)
+    }
+
     pub fn left(&mut self) -> Result<(), TextFieldError> {
         if self.cursor == 0 {
             return Ok(());

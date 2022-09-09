@@ -51,10 +51,12 @@ impl Grid {
             .iter()
             .zip(heights.iter())
             .map(|(y, height)| {
-                xs.iter()
+                let mut row = xs.iter()
                     .zip(widths.iter())
-                    .map(|(x, width)| Rect::new(*x, *y, *width, *height))
-                    .collect::<Vec<_>>()
+                    .map(|(x, width)| Rect::new(*x, *y, *width, *height - 1))
+                    .collect::<Vec<_>>();
+                row.last_mut().unwrap().width -= 1;
+                row
             })
             .collect::<Vec<_>>())
     }

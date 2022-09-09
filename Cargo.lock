@@ -205,12 +205,13 @@ dependencies = [
 
 [[package]]
 name = "tui-additions"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "crossterm 0.24.0",
  "dyn-clone",
  "tui",
  "typemap",
+ "unicode-segmentation",
 ]
 
 [[package]]
