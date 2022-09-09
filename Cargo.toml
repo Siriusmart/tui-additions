@@ -1,6 +1,6 @@
 [package]
 name = "tui-additions"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 authors = ["Siriusmart <siriusmart@tuta.io>"]
 description = "Additions to the Rust TUI crate"
@@ -13,8 +13,8 @@ repository = "https://github.com/Siriusmart/tui-additions"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tui = {version = "0.18", optional = true}
-crossterm = {version = "0.24", optional = true}
+tui = {version = "0.19", optional = true}
+crossterm = {version = "0.25", optional = true}
 typemap = {version = "0.3", optional = true}
 dyn-clone = {version = "1.0", optional = true}
 unicode-segmentation = {version = "1.9", optional = true}
