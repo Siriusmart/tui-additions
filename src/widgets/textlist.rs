@@ -161,7 +161,7 @@ impl TextList {
 
     /// Go to the last item
     pub fn last(&mut self) -> Result<(), TextListError> {
-        if self.selected == 0 {
+        if self.selected == self.items.len() - 1 {
             return Ok(());
         }
 

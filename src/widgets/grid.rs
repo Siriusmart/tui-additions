@@ -51,11 +51,10 @@ impl Grid {
             .iter()
             .zip(heights.iter())
             .map(|(y, height)| {
-                let mut row = xs.iter()
+                let row = xs.iter()
                     .zip(widths.iter())
                     .map(|(x, width)| Rect::new(*x, *y, *width, *height - 1))
                     .collect::<Vec<_>>();
-                row.last_mut().unwrap().width -= 1;
                 row
             })
             .collect::<Vec<_>>())
@@ -67,7 +66,7 @@ impl Grid {
             lines.push(position);
             position += 1 + *lengths;
         });
-        position -= 1;
+        // position -= 1;
         lines.push(position);
 
         lines
@@ -78,7 +77,7 @@ impl Grid {
     }
 
     pub fn widths(&self, width: u16) -> Result<Vec<u16>, GridError> {
-        Self::lengths(&self.widths, width)
+        Self::lengths(&self.widths, width - 1)
     }
 
     pub fn lengths(constraints: &Vec<Constraint>, mut length: u16) -> Result<Vec<u16>, GridError> {
@@ -88,10 +87,16 @@ impl Grid {
 
         length -= constraints.len() as u16;
 
-        let lengths = constraints
+        let mut lengths = constraints
             .iter()
             .map(|constraint| constraint.apply(length))
             .collect::<Vec<_>>();
+        let sum: u16 = lengths.iter().sum();
+
+        if sum < length {
+            *lengths.last_mut().unwrap() += length - sum;
+        }
+            // .collect::<Vec<_>>();
 
         Ok(lengths)
     }
@@ -169,7 +174,9 @@ impl Grid {
 }
 
 impl Widget for Grid {
-    fn render(self, area: Rect, buf: &mut tui::buffer::Buffer) {
+    fn render(self, mut area: Rect, buf: &mut tui::buffer::Buffer) {
+        area.height -= 1;
+
         let widths = self.widths(area.width).unwrap();
         let heights = self.heights(area.height).unwrap();
         let vertical_lines = Self::lines(area.x, &widths);
@@ -179,8 +186,6 @@ impl Widget for Grid {
         let bottom = horizontal_lines.last().unwrap();
         let left = vertical_lines.first().unwrap();
         let right = vertical_lines.last().unwrap();
-
-        // panic!("Rightest line: {}, Right: {}", right, area.right());
 
         let set = BorderType::line_symbols(self.border_type);
 
