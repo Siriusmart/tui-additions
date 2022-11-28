@@ -5,6 +5,7 @@ use tui::{
     text::{Span, Spans},
     widgets::{Paragraph, Widget},
 };
+use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Clone)]
 pub struct TextField {
@@ -27,9 +28,15 @@ impl Widget for TextField {
             panic!("unknown width");
         }
 
-        let cursor_at_end = self.cursor == self.content.len();
+        let unicode = UnicodeSegmentation::graphemes(self.content.as_str(), true);
+
+        let cursor_at_end = self.cursor == unicode.clone().count();
         let mut spans = vec![Span::styled(
-            self.content[self.scroll..self.cursor].to_string(),
+            unicode
+                .clone()
+                .skip(self.scroll)
+                .take(self.cursor - self.scroll)
+                .collect::<String>(),
             self.text_style,
         )];
 
@@ -37,11 +44,15 @@ impl Widget for TextField {
             spans.push(Span::styled(String::from(' '), self.cursor_style));
         } else {
             spans.push(Span::styled(
-                self.content[self.cursor..self.cursor + 1].to_string(),
+                unicode
+                    .clone()
+                    .skip(self.cursor)
+                    .take(1)
+                    .collect::<String>(),
                 self.cursor_style,
             ));
             spans.push(Span::styled(
-                self.content[self.cursor + 1..self.content.len()].to_string(),
+                unicode.clone().skip(self.cursor + 1).collect::<String>(),
                 self.text_style,
             ));
         }
@@ -67,27 +78,39 @@ impl Default for TextField {
 
 impl TextField {
     pub fn insert(&mut self, index: usize, c: char) -> Result<(), TextFieldError> {
-        self.content.insert(index, c);
+        self.content = format!(
+            "{}{}{}",
+            UnicodeSegmentation::graphemes(self.content.as_str(), true)
+                .take(index)
+                .collect::<String>(),
+            c,
+            UnicodeSegmentation::graphemes(self.content.as_str(), true)
+                .skip(index)
+                .collect::<String>()
+        );
         self.cursor += 1;
         self.update()?;
         Ok(())
     }
 
-    pub fn remove(&mut self, index: usize) -> Result<Option<char>, TextFieldError> {
+    pub fn remove(&mut self, index: usize) -> Result<(), TextFieldError> {
         if self.cursor == 0 {
-            return Ok(None);
+            return Ok(());
         }
-        let c = self.content.remove(index - 1);
+        let s = self.content.clone();
+        let mut s = UnicodeSegmentation::graphemes(s.as_str(), true).collect::<Vec<_>>();
+        s.remove(index - 1);
+        self.content = s.into_iter().collect();
         self.cursor -= 1;
         self.update()?;
-        Ok(Some(c))
+        Ok(())
     }
 
     pub fn push(&mut self, c: char) -> Result<(), TextFieldError> {
         self.insert(self.cursor, c)
     }
 
-    pub fn pop(&mut self) -> Result<Option<char>, TextFieldError> {
+    pub fn pop(&mut self) -> Result<(), TextFieldError> {
         self.remove(self.cursor)
     }
 
@@ -136,6 +159,12 @@ impl TextField {
             self.scroll = self.cursor;
         } else if self.scroll + width as usize - 1 < self.cursor {
             self.scroll = self.cursor - width as usize + 1;
+        }
+
+        let len = UnicodeSegmentation::graphemes(self.content.as_str(), true).count();
+
+        if self.cursor > len {
+            self.cursor = len;
         }
 
         Ok(())

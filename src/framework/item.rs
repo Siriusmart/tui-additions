@@ -1,8 +1,8 @@
-use std::{io::Stdout, error::Error};
+use super::{FrameworkClean, ItemInfo};
 use crossterm::event::KeyEvent;
 use dyn_clone::DynClone;
+use std::{error::Error, io::Stdout};
 use tui::{backend::CrosstermBackend, layout::Rect, Frame};
-use super::{FrameworkClean, ItemInfo};
 
 /// Trait every item on `State` should implment
 ///
@@ -30,14 +30,27 @@ pub trait FrameworkItem: DynClone {
         area: Rect,
         popup_render: bool,
         info: ItemInfo,
-    ){
+    ) {
     }
 
     /// Runs when `Framework.load_item()` is called
-    fn load_item(&mut self, framework: &mut FrameworkClean, info: ItemInfo) -> Result<(), Box<dyn Error>> {Ok(())}
+    fn load_item(
+        &mut self,
+        framework: &mut FrameworkClean,
+        info: ItemInfo,
+    ) -> Result<(), Box<dyn Error>> {
+        Ok(())
+    }
 
     /// Handles key event
-    fn key_event(&mut self, framework: &mut FrameworkClean, key: KeyEvent, info: ItemInfo) -> Result<(), Box<dyn Error>> {Ok(())}
+    fn key_event(
+        &mut self,
+        framework: &mut FrameworkClean,
+        key: KeyEvent,
+        info: ItemInfo,
+    ) -> Result<(), Box<dyn Error>> {
+        Ok(())
+    }
 }
 
 impl Clone for Box<dyn FrameworkItem> {

@@ -17,7 +17,7 @@ pub struct Grid {
 
 impl Grid {
     pub fn new(widths: Vec<Constraint>, heights: Vec<Constraint>) -> Result<Self, GridError> {
-        if widths.len() == 0 || heights.len() == 0 {
+        if widths.is_empty() || heights.is_empty() {
             return Err(GridError::ZeroLength);
         }
         Ok(Self {
@@ -51,7 +51,8 @@ impl Grid {
             .iter()
             .zip(heights.iter())
             .map(|(y, height)| {
-                let row = xs.iter()
+                let row = xs
+                    .iter()
                     .zip(widths.iter())
                     .map(|(x, width)| Rect::new(*x, *y, *width, *height - 1))
                     .collect::<Vec<_>>();
@@ -60,7 +61,7 @@ impl Grid {
             .collect::<Vec<_>>())
     }
 
-    pub fn lines(mut position: u16, lengths: &Vec<u16>) -> Vec<u16> {
+    pub fn lines(mut position: u16, lengths: &[u16]) -> Vec<u16> {
         let mut lines = Vec::new();
         lengths.iter().for_each(|lengths| {
             lines.push(position);
@@ -96,7 +97,7 @@ impl Grid {
         if sum < length {
             *lengths.last_mut().unwrap() += length - sum;
         }
-            // .collect::<Vec<_>>();
+        // .collect::<Vec<_>>();
 
         Ok(lengths)
     }
@@ -149,7 +150,7 @@ impl Grid {
             return set.vertical_left;
         }
 
-        return set.cross;
+        set.cross
     }
 }
 

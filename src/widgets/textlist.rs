@@ -77,7 +77,7 @@ impl TextList {
 
     /// Move cursor down by 1 item (if there is)
     pub fn down(&mut self) -> Result<(), TextListError> {
-        if self.items.len() == 0 {
+        if self.items.is_empty() {
             return Ok(());
         }
 
@@ -212,12 +212,12 @@ impl TextList {
         self.height = Some(height);
     }
 
-    pub fn items<D: Display>(mut self, items: &Vec<D>) -> Result<Self, Box<dyn Error>> {
+    pub fn items<D: Display>(mut self, items: &[D]) -> Result<Self, Box<dyn Error>> {
         self.set_items(items)?;
         Ok(self)
     }
 
-    pub fn set_items<D: Display>(&mut self, items: &Vec<D>) -> Result<(), Box<dyn Error>> {
+    pub fn set_items<D: Display>(&mut self, items: &[D]) -> Result<(), Box<dyn Error>> {
         self.items = items.iter().map(|item| format!("{}", item)).collect();
         if self.height.is_some() {
             self.update()?;
@@ -347,7 +347,11 @@ impl Widget for TextList {
         self.items.iter_mut().for_each(|item| {
             let chars = UnicodeSegmentation::graphemes(item.as_str(), true).collect::<Vec<_>>();
             if chars.len() > width_from {
-                *item = format!("{}{}", chars.into_iter().take(width_after).collect::<String>(), end_with);
+                *item = format!(
+                    "{}{}",
+                    chars.into_iter().take(width_after).collect::<String>(),
+                    end_with
+                );
             }
         });
 

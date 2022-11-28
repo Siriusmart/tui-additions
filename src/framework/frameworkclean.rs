@@ -7,13 +7,13 @@ pub struct FrameworkClean<'a> {
     pub cursor: &'a mut CursorState,
 }
 
-impl<'a> Into<(FrameworkClean<'a>, &'a mut State)> for &'a mut Framework {
-    fn into(self) -> (FrameworkClean<'a>, &'a mut State) {
-        let state = &mut self.state;
+impl<'a> From<&'a mut Framework> for (FrameworkClean<'a>, &'a mut State) {
+    fn from(original: &'a mut Framework) -> (FrameworkClean<'a>, &'a mut State) {
+        let state = &mut original.state;
         let frameworkclean = FrameworkClean {
-            selectables: &mut self.selectables,
-            data: &mut self.data,
-            cursor: &mut self.cursor,
+            selectables: &mut original.selectables,
+            data: &mut original.data,
+            cursor: &mut original.cursor,
         };
 
         (frameworkclean, state)

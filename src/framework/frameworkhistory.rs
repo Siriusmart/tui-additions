@@ -15,13 +15,13 @@ pub struct FrameworkHistory {
     pub cursor: CursorState,
 }
 
-impl Into<Framework> for FrameworkHistory {
-    fn into(self) -> Framework {
+impl From<FrameworkHistory> for Framework {
+    fn from(original: FrameworkHistory) -> Framework {
         Framework {
-            selectables: self.selectables,
-            data: FrameworkData::from((TypeMap::custom(), self.data)),
-            state: self.state,
-            cursor: self.cursor,
+            selectables: original.selectables,
+            data: FrameworkData::from((TypeMap::custom(), original.data)),
+            state: original.state,
+            cursor: original.cursor,
             history: Vec::new(),
         }
     }

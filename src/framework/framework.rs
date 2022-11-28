@@ -39,7 +39,7 @@ impl Framework {
             selectables: self.selectables.clone(),
             data: self.data.state.clone(),
             state: self.state.clone(),
-            cursor: self.cursor.clone(),
+            cursor: self.cursor,
         });
     }
 
@@ -130,7 +130,7 @@ impl Framework {
     pub fn render_raw(
         &mut self,
         frame: &mut Frame<CrosstermBackend<Stdout>>,
-        chunks: &Vec<Vec<Rect>>,
+        chunks: &[Vec<Rect>],
         selected: Option<(usize, usize)>,
         hover: Option<(usize, usize)>,
         popup_render: bool,
@@ -176,7 +176,7 @@ impl Framework {
     pub fn render_only_multiple(
         &mut self,
         frame: &mut Frame<CrosstermBackend<Stdout>>,
-        locations: &Vec<(usize, usize)>,
+        locations: &[(usize, usize)],
     ) {
         let chunks = self.state.get_chunks(frame.size());
 
@@ -277,7 +277,7 @@ impl Framework {
         )
     }
 
-    pub fn load_only_multiple(&mut self, locations: &Vec<(usize, usize)>) {
+    pub fn load_only_multiple(&mut self, locations: &[(usize, usize)]) {
         let selected = self.cursor.selected(&self.selectables);
         let hover = self.cursor.hover(&self.selectables);
         let (mut frameworkclean, state) = self.split_clean();

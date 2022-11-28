@@ -40,7 +40,7 @@ impl State {
                     row_selectables.push((x, y));
                 }
             });
-            if row_selectables.len() != 0 {
+            if !row_selectables.is_empty() {
                 selectables.push(row_selectables);
             }
         });
@@ -57,42 +57,39 @@ impl State {
 
         let row_constraints_length = row_constraints.len() - 2;
 
-        let rows = Layout::default()
+        Layout::default()
             .direction(Direction::Vertical)
             .constraints(row_constraints)
             .split(area)
             .into_iter()
             .skip(1)
             .take(row_constraints_length)
-            .collect::<Vec<_>>();
+            .into_iter()
+            .zip(
+                self.0
+                    .iter()
+                    .map(|row| {
+                        let begin_length = if row.centered {
+                            Constraint::Length(
+                                (area.width
+                                    - row
+                                        .items
+                                        .iter()
+                                        .map(|item| item.width.apply(area.width))
+                                        .sum::<u16>())
+                                    / 2,
+                            )
+                        } else {
+                            Constraint::Length(0)
+                        };
 
-        let constraints = self
-            .0
-            .iter()
-            .map(|row| {
-                let begin_length = if row.centered {
-                    Constraint::Length(
-                        (area.width
-                            - row
-                                .items
-                                .iter()
-                                .map(|item| item.width.apply(area.width))
-                                .sum::<u16>())
-                            / 2,
-                    )
-                } else {
-                    Constraint::Length(0)
-                };
-
-                let mut out = vec![begin_length];
-                out.extend(row.items.iter().map(|item| item.width));
-                out.push(Constraint::Length(0));
-                out
-            })
-            .collect::<Vec<_>>();
-
-        rows.into_iter()
-            .zip(constraints.into_iter())
+                        let mut out = vec![begin_length];
+                        out.extend(row.items.iter().map(|item| item.width));
+                        out.push(Constraint::Length(0));
+                        out
+                    })
+                    .into_iter(),
+            )
             .map(|(row_chunk, constraints)| {
                 let constraints_length = constraints.len() - 2;
 
@@ -109,8 +106,8 @@ impl State {
     }
 
     /// Get reference to item with x and y value
-    pub fn get(&self, x: usize, y: usize) -> &Box<dyn FrameworkItem> {
-        &self.0[y].items[x].item
+    pub fn get(&self, x: usize, y: usize) -> &dyn FrameworkItem {
+        &*self.0[y].items[x].item
     }
 
     /// Get mutable reference to item with x and y value
@@ -140,19 +137,11 @@ impl Default for CursorState {
 
 impl CursorState {
     pub fn is_selected(&self) -> bool {
-        if let Self::Selected(_, _) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Self::Selected(_, _))
     }
 
     pub fn is_hover(&self) -> bool {
-        if let Self::Hover(_, _) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Self::Hover(_, _))
     }
 
     pub fn is_none(&self) -> bool {
@@ -194,8 +183,8 @@ impl CursorState {
 
     pub fn hover(&self, selectables: &Vec<Vec<(usize, usize)>>) -> Option<(usize, usize)> {
         match self {
-            Self::Hover(x, y) if selectables.len() != 0 => {
-                Some(Self::selectables_to_coors(&selectables, (*x, *y)))
+            Self::Hover(x, y) if !selectables.is_empty() => {
+                Some(Self::selectables_to_coors(selectables, (*x, *y)))
             }
             _ => None,
         }
@@ -203,15 +192,15 @@ impl CursorState {
 
     pub fn selected(&self, selectables: &Vec<Vec<(usize, usize)>>) -> Option<(usize, usize)> {
         match self {
-            Self::Selected(x, y) if selectables.len() != 0 => {
-                Some(Self::selectables_to_coors(&selectables, (*x, *y)))
+            Self::Selected(x, y) if !selectables.is_empty() => {
+                Some(Self::selectables_to_coors(selectables, (*x, *y)))
             }
             _ => None,
         }
     }
 
     fn selectables_to_coors(
-        selectables: &Vec<Vec<(usize, usize)>>,
+        selectables: &[Vec<(usize, usize)>],
         location: (usize, usize),
     ) -> (usize, usize) {
         let (location_x, location_y) = location;
@@ -241,7 +230,7 @@ impl CursorState {
 
     fn move_check(&mut self, selectables: &Vec<Vec<(usize, usize)>>) {
         if let Self::Hover(x, y) = self {
-            if selectables.len() == 0 {
+            if selectables.is_empty() {
                 *x = 0;
                 *y = 0;
                 return;
