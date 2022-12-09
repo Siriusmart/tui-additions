@@ -51,6 +51,10 @@ pub trait FrameworkItem: DynClone {
     ) -> Result<(), Box<dyn Error>> {
         Ok(())
     }
+
+    fn mouse_event(&mut self, framework: &mut FrameworkClean, x: u16, y: u16) -> bool {
+        false
+    }
 }
 
 impl Clone for Box<dyn FrameworkItem> {

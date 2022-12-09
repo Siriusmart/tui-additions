@@ -23,6 +23,7 @@ impl From<FrameworkHistory> for Framework {
             state: original.state,
             cursor: original.cursor,
             history: Vec::new(),
+            frame_area: None,
         }
     }
 }

@@ -25,6 +25,8 @@ pub struct Framework {
     pub cursor: CursorState,
     /// Stores saved states
     pub history: Vec<FrameworkHistory>,
+    /// Stores the area of the previous frame
+    pub frame_area: Option<Rect>,
 }
 
 impl Framework {
@@ -101,6 +103,7 @@ impl Framework {
             selectables: state.selectables(),
             data: FrameworkData::default(),
             state,
+            frame_area: None,
             cursor: CursorState::default(),
             history: Vec::new(),
         }
@@ -115,6 +118,7 @@ impl Framework {
     /// Render every item to screen
     pub fn render(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>) {
         let area = frame.size();
+        self.frame_area = Some(area);
 
         let chunks = self.state.get_chunks(area);
 
@@ -237,6 +241,47 @@ impl Framework {
         }
 
         Ok(())
+    }
+
+    /// Handles when mouse is clicked
+    pub fn mouse_event(&mut self, col: u16, row: u16) -> bool {
+        let chunks = match self.frame_area {
+            Some(area) => self.state.get_chunks(area),
+            None => return false,
+        };
+
+        // loops over selectable items only
+        for (row_no, row_selectables) in self.selectables.iter().enumerate() {
+            for (col_no, &(x, y)) in row_selectables.iter().enumerate() {
+                let chunk = chunks[y][x];
+                // guard gate to only do stuff if clicking on item
+                if !chunk.intersects(Rect::new(col, row, 1, 1)) {
+                    continue;
+                }
+
+                // pass click event to item only if it is already selected
+                if self.cursor.selected(&self.selectables) == Some((col_no, row_no)) {
+                    let (mut clean, state) = self.split_clean();
+                    return state.get_mut(x, y).mouse_event(
+                        &mut clean,
+                        col - chunk.x,
+                        row - chunk.y,
+                    );
+                }
+
+                if self.cursor.hover(&self.selectables) == Some((col_no, row_no)) {
+                    return self.select().is_ok();
+                }
+
+                self.deselect().ok();
+                self.cursor = CursorState::to_hover((col_no, row_no));
+                return true;
+            }
+        }
+
+        self.deselect().ok();
+        self.cursor = CursorState::default();
+        true
     }
 
     pub fn load(&mut self) -> Result<(), Box<dyn Error>> {
