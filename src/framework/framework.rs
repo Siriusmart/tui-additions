@@ -266,6 +266,8 @@ impl Framework {
                         &mut clean,
                         col - chunk.x,
                         row - chunk.y,
+                        col,
+                        row,
                     );
                 }
 

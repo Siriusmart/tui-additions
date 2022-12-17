@@ -1,7 +1,7 @@
 use super::{FrameworkClean, ItemInfo};
 use crossterm::event::KeyEvent;
 use dyn_clone::DynClone;
-use std::{error::Error, io::Stdout};
+use std::{error::Error, io::Stdout, any::type_name};
 use tui::{backend::CrosstermBackend, layout::Rect, Frame};
 
 /// Trait every item on `State` should implment
@@ -52,9 +52,24 @@ pub trait FrameworkItem: DynClone {
         Ok(())
     }
 
-    fn mouse_event(&mut self, framework: &mut FrameworkClean, x: u16, y: u16) -> bool {
+    fn mouse_event(
+        &mut self,
+        framework: &mut FrameworkClean,
+        x: u16,
+        y: u16,
+        absolute_x: u16,
+        absolute_y: u16,
+    ) -> bool {
         false
     }
+    
+    fn r#type(&self) -> &'static str {
+        type_name_of_val(self)
+    }
+}
+
+pub fn type_name_of_val<T: ?Sized>(_val: &T) -> &'static str {
+    type_name::<T>()
 }
 
 impl Clone for Box<dyn FrameworkItem> {
