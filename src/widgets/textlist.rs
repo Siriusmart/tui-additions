@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::Display};
 
-use tui::{
+use ratatui::{
     layout::Rect,
     style::Style,
     widgets::{Block, BorderType, Borders, Paragraph, Widget},
@@ -292,11 +292,11 @@ impl Default for TextList {
     }
 }
 
-/// `tui::widget::Widget` implementation
+/// `ratatui::widget::Widget` implementation
 impl Widget for TextList {
     /// Note that if `self.height` does not match the actualy height, it will panic instead because
     /// there is no way to return a `Result<T, E>` out of this function
-    fn render(mut self, area: tui::layout::Rect, buf: &mut tui::buffer::Buffer) {
+    fn render(mut self, area: ratatui::layout::Rect, buf: &mut ratatui::buffer::Buffer) {
         let height = self.height.expect("unknown height");
         if height != area.height {
             panic!("height mismatch");

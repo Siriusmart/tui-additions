@@ -1,5 +1,5 @@
 use super::{FrameworkError, FrameworkItem};
-use tui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
 
 /// Contains an item
 #[derive(Clone)]
@@ -61,10 +61,9 @@ impl State {
             .direction(Direction::Vertical)
             .constraints(row_constraints)
             .split(area)
-            .into_iter()
+            .iter()
             .skip(1)
             .take(row_constraints_length)
-            .into_iter()
             .zip(
                 self.0
                     .iter()
@@ -87,8 +86,7 @@ impl State {
                         out.extend(row.items.iter().map(|item| item.width));
                         out.push(Constraint::Length(0));
                         out
-                    })
-                    .into_iter(),
+                    }),
             )
             .map(|(row_chunk, constraints)| {
                 let constraints_length = constraints.len() - 2;
@@ -96,10 +94,10 @@ impl State {
                 Layout::default()
                     .direction(Direction::Horizontal)
                     .constraints(constraints)
-                    .split(row_chunk)
-                    .into_iter()
+                    .split(*row_chunk)
+                    .iter()
                     .skip(1)
-                    .take(constraints_length)
+                    .take(constraints_length).copied()
                     .collect()
             })
             .collect::<Vec<_>>()

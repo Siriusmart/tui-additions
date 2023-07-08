@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::Display};
 
-use tui::{
+use ratatui::{
     layout::{Constraint, Rect},
     style::Style,
     symbols::line::Set,
@@ -175,7 +175,7 @@ impl Grid {
 }
 
 impl Widget for Grid {
-    fn render(self, mut area: Rect, buf: &mut tui::buffer::Buffer) {
+    fn render(self, mut area: Rect, buf: &mut ratatui::buffer::Buffer) {
         area.height -= 1;
 
         let widths = self.widths(area.width).unwrap();

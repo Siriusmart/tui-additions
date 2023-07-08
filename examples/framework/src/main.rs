@@ -7,7 +7,7 @@ use std::{
     error::Error,
     io::{stdout, Stdout}, fmt::Display,
 };
-use tui::{
+use ratatui::{
     backend::CrosstermBackend,
     layout::Constraint,
     style::{Color, Style},
@@ -135,7 +135,7 @@ impl FrameworkItem for TextBox {
         &mut self,
         frame: &mut Frame<CrosstermBackend<Stdout>>,
         _framework: &FrameworkClean,
-        area: tui::layout::Rect,
+        area: ratatui::layout::Rect,
         selected: bool,
         hover: bool,
         _popup_render: bool,
@@ -175,7 +175,7 @@ impl FrameworkItem for List {
         &mut self,
         frame: &mut Frame<CrosstermBackend<Stdout>>,
         _framework: &FrameworkClean,
-        area: tui::layout::Rect,
+        area: ratatui::layout::Rect,
         selected: bool,
         hover: bool,
         _popup_render: bool,
@@ -221,7 +221,7 @@ impl FrameworkItem for KeyPressDisplay {
             &mut self,
             frame: &mut Frame<CrosstermBackend<Stdout>>,
             framework: &FrameworkClean,
-            area: tui::layout::Rect,
+            area: ratatui::layout::Rect,
             _selected: bool,
             _hover: bool,
             _popup_render: bool,

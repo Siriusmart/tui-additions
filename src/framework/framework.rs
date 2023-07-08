@@ -1,7 +1,7 @@
 use std::{error::Error, fmt::Display, io::Stdout};
 
 use crossterm::event::KeyEvent;
-use tui::{backend::CrosstermBackend, layout::Rect, Frame};
+use ratatui::{backend::CrosstermBackend, layout::Rect, Frame};
 
 use super::{
     CursorState, FrameworkClean, FrameworkData, FrameworkDirection, FrameworkHistory, ItemInfo,

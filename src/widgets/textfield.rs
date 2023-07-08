@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
-use tui::{
+use ratatui::{
     style::{Color, Style},
-    text::{Span, Spans},
+    text::{Span, Line},
     widgets::{Paragraph, Widget},
 };
 use unicode_segmentation::UnicodeSegmentation;
@@ -19,7 +19,7 @@ pub struct TextField {
 }
 
 impl Widget for TextField {
-    fn render(self, area: tui::layout::Rect, buf: &mut tui::buffer::Buffer) {
+    fn render(self, area: ratatui::layout::Rect, buf: &mut ratatui::buffer::Buffer) {
         if let Some(width) = self.width {
             if width != area.width {
                 panic!("width mismatch");
@@ -57,7 +57,7 @@ impl Widget for TextField {
             ));
         }
 
-        let paragraph = Paragraph::new(Spans::from(spans)).style(self.style);
+        let paragraph = Paragraph::new(Line::from(spans)).style(self.style);
         paragraph.render(area, buf);
     }
 }

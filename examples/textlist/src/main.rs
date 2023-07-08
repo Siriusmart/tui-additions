@@ -1,6 +1,6 @@
 use std::{error::Error, io::stdout};
 use crossterm::{terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen}, execute, event::{EnableMouseCapture, DisableMouseCapture, Event, self, KeyCode}};
-use tui::{backend::{CrosstermBackend, Backend}, Terminal, Frame, style::{Style, Color}, widgets::BorderType};
+use ratatui::{backend::{CrosstermBackend, Backend}, Terminal, Frame, style::{Style, Color}, widgets::BorderType};
 use tui_additions::widgets::TextList;
 
 fn main() -> Result<(), Box<dyn Error>> {

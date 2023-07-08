@@ -2,7 +2,7 @@ use super::{FrameworkClean, ItemInfo};
 use crossterm::event::KeyEvent;
 use dyn_clone::DynClone;
 use std::{error::Error, io::Stdout, any::type_name};
-use tui::{backend::CrosstermBackend, layout::Rect, Frame};
+use ratatui::{backend::CrosstermBackend, layout::Rect, Frame};
 
 /// Trait every item on `State` should implment
 ///

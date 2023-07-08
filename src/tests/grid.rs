@@ -1,4 +1,4 @@
-use tui::layout::{Constraint, Rect};
+use ratatui::layout::{Constraint, Rect};
 
 use crate::widgets::{Grid, GridError};
 
