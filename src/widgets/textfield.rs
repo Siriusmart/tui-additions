@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use ratatui::{
     style::{Color, Style},
-    text::{Span, Line},
+    text::{Line, Span},
     widgets::{Paragraph, Widget},
 };
 use unicode_segmentation::UnicodeSegmentation;

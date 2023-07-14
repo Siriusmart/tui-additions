@@ -1,14 +1,14 @@
 use super::{FrameworkClean, ItemInfo};
 use crossterm::event::KeyEvent;
 use dyn_clone::DynClone;
-use std::{error::Error, io::Stdout, any::type_name};
 use ratatui::{backend::CrosstermBackend, layout::Rect, Frame};
+use std::{any::Any, error::Error, io::Stdout};
 
 /// Trait every item on `State` should implment
 ///
 /// Only include functions if you want to change
 #[allow(unused)]
-pub trait FrameworkItem: DynClone {
+pub trait FrameworkItem: DynClone + Any {
     /// If the item is selectable (if not the cursor will not be able to hover or select that item)
     fn selectable(&self) -> bool {
         true
@@ -62,14 +62,6 @@ pub trait FrameworkItem: DynClone {
     ) -> bool {
         false
     }
-    
-    fn r#type(&self) -> &'static str {
-        type_name_of_val(self)
-    }
-}
-
-pub fn type_name_of_val<T: ?Sized>(_val: &T) -> &'static str {
-    type_name::<T>()
 }
 
 impl Clone for Box<dyn FrameworkItem> {

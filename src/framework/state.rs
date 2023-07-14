@@ -64,30 +64,26 @@ impl State {
             .iter()
             .skip(1)
             .take(row_constraints_length)
-            .zip(
-                self.0
-                    .iter()
-                    .map(|row| {
-                        let begin_length = if row.centered {
-                            Constraint::Length(
-                                (area.width
-                                    - row
-                                        .items
-                                        .iter()
-                                        .map(|item| item.width.apply(area.width))
-                                        .sum::<u16>())
-                                    / 2,
-                            )
-                        } else {
-                            Constraint::Length(0)
-                        };
+            .zip(self.0.iter().map(|row| {
+                let begin_length = if row.centered {
+                    Constraint::Length(
+                        (area.width
+                            - row
+                                .items
+                                .iter()
+                                .map(|item| item.width.apply(area.width))
+                                .sum::<u16>())
+                            / 2,
+                    )
+                } else {
+                    Constraint::Length(0)
+                };
 
-                        let mut out = vec![begin_length];
-                        out.extend(row.items.iter().map(|item| item.width));
-                        out.push(Constraint::Length(0));
-                        out
-                    }),
-            )
+                let mut out = vec![begin_length];
+                out.extend(row.items.iter().map(|item| item.width));
+                out.push(Constraint::Length(0));
+                out
+            }))
             .map(|(row_chunk, constraints)| {
                 let constraints_length = constraints.len() - 2;
 
@@ -97,7 +93,8 @@ impl State {
                     .split(*row_chunk)
                     .iter()
                     .skip(1)
-                    .take(constraints_length).copied()
+                    .take(constraints_length)
+                    .copied()
                     .collect()
             })
             .collect::<Vec<_>>()
