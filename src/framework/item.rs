@@ -1,8 +1,8 @@
 use super::{FrameworkClean, ItemInfo};
 use crossterm::event::KeyEvent;
 use dyn_clone::DynClone;
-use ratatui::{backend::CrosstermBackend, layout::Rect, Frame};
-use std::{any::Any, error::Error, io::Stdout};
+use ratatui::{layout::Rect, Frame};
+use std::{any::Any, error::Error};
 
 /// Trait every item on `State` should implment
 ///
@@ -25,7 +25,7 @@ pub trait FrameworkItem: DynClone + Any {
     }
     fn render(
         &mut self,
-        frame: &mut Frame<CrosstermBackend<Stdout>>,
+        frame: &mut Frame,
         framework: &mut FrameworkClean,
         area: Rect,
         popup_render: bool,

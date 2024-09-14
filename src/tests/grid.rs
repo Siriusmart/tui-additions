@@ -46,7 +46,7 @@ fn chunks() {
     {
         let widths = vec![Constraint::Percentage(40), Constraint::Percentage(60)];
         let heights = vec![Constraint::Percentage(100)];
-        let grid = Grid::new(widths, heights);
+        let grid = Grid::new(widths, heights).unwrap();
         let area = Rect::new(10, 20, 103, 52);
 
         let chunks = grid.chunks(area).unwrap();
@@ -60,7 +60,7 @@ fn chunks() {
     {
         let widths = vec![Constraint::Percentage(50), Constraint::Percentage(50)];
         let heights = vec![Constraint::Percentage(50), Constraint::Percentage(50)];
-        let grid = Grid::new(widths, heights);
+        let grid = Grid::new(widths, heights).unwrap();
         let area = Rect::new(10, 10, 103, 103);
 
         let chunks = grid.chunks(area).unwrap();

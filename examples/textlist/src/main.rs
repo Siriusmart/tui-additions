@@ -1,6 +1,15 @@
+use crossterm::{
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
+use ratatui::{
+    backend::{Backend, CrosstermBackend},
+    style::{Color, Style},
+    widgets::BorderType,
+    Frame, Terminal,
+};
 use std::{error::Error, io::stdout};
-use crossterm::{terminal::{enable_raw_mode, EnterAlternateScreen, disable_raw_mode, LeaveAlternateScreen}, execute, event::{EnableMouseCapture, DisableMouseCapture, Event, self, KeyCode}};
-use ratatui::{backend::{CrosstermBackend, Backend}, Terminal, Frame, style::{Style, Color}, widgets::BorderType};
 use tui_additions::widgets::TextList;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -16,7 +25,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // restore terminal
     disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
     terminal.show_cursor()?;
 
     res?;
@@ -26,9 +39,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>> {
     // generate dummy items for the text list
-    let items = (1..101).map(|item| {
-        format!("{}. Press Q to exit", item)
-    }).collect();
+    let items = (1..101)
+        .map(|item| format!("{}. Press Q to exit", item))
+        .collect::<Vec<_>>();
 
     // create the textlist with custom styles
     let mut textlist = TextList::default()
@@ -46,8 +59,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>>
         if let Event::Key(key) = event::read()? {
             match key.code {
                 // bit 1 is the shift key modifier, so shift up arrow will go to the first item
-                KeyCode::Up if key.modifiers.bits() == 1 => self.textlist.first()?,
-                KeyCode::Down if key.modifiers.bits() == 1 => self.textlist.last()?,
+                KeyCode::Up if key.modifiers.bits() == 1 => textlist.first()?,
+                KeyCode::Down if key.modifiers.bits() == 1 => textlist.last()?,
                 KeyCode::Up => textlist.up()?,
                 KeyCode::Down => textlist.down()?,
                 KeyCode::PageUp => textlist.pageup()?,
@@ -59,9 +72,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>) -> Result<(), Box<dyn Error>>
     }
 }
 
-fn ui<B: Backend>(frame: &mut Frame<B>, list: &mut TextList) {
+fn ui(frame: &mut Frame, list: &mut TextList) {
     // set the height first
-    list.set_height(frame.size().height);
+    list.set_height(frame.area().height);
     // then render it
-    frame.render_widget(list.clone(), frame.size());
+    frame.render_widget(list.clone(), frame.area());
 }

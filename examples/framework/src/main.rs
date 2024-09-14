@@ -1,21 +1,24 @@
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::{
-    error::Error,
-    io::{stdout, Stdout}, fmt::Display,
-};
 use ratatui::{
     backend::CrosstermBackend,
-    layout::Constraint,
+    layout::{Constraint, Rect},
     style::{Color, Style},
     widgets::{Block, Borders, Paragraph},
     Frame, Terminal,
 };
+use std::{
+    error::Error,
+    fmt::Display,
+    io::{stdout, Stdout},
+};
 use tui_additions::{
-    framework::{Direction, Framework, FrameworkClean, FrameworkItem, Row, RowItem, State},
+    framework::{
+        Framework, FrameworkClean, FrameworkDirection, FrameworkItem, ItemInfo, Row, RowItem, State,
+    },
     widgets::TextList,
 };
 use typemap::Key;
@@ -70,20 +73,20 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<(), Box<
             height: Constraint::Length(10),
         },
         Row {
-            items: vec![
-                RowItem {
-                    item: Box::new(KeyPressDisplay),
-                    width: Constraint::Length(40),
-                }
-            ],
+            items: vec![RowItem {
+                item: Box::new(KeyPressDisplay),
+                width: Constraint::Length(40),
+            }],
             centered: true,
             height: Constraint::Length(3),
-        }
+        },
     ]);
 
     let mut app = Framework::new(state);
 
-    app.data.insert::<KeyLastPressed>(KeyLastPressed(None));
+    app.data
+        .state
+        .insert::<KeyLastPressed>(KeyLastPressed(None));
 
     loop {
         terminal.draw(|frame| {
@@ -91,21 +94,22 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> Result<(), Box<
         })?;
 
         if let Event::Key(key) = event::read()? {
-            app.data.insert::<KeyLastPressed>(KeyLastPressed(Some(key.code)));
+            app.data
+                .state
+                .insert::<KeyLastPressed>(KeyLastPressed(Some(key.code)));
 
             if key.code == KeyCode::Esc {
                 _ = app.deselect();
             }
 
-            if let Some((x, y)) =  app.cursor.selected(&app.selectables) {
-                let (frameworkclean, state) = app.split_clean();
-                state.get_mut(x, y).key_event(frameworkclean, key);
+            if app.cursor.selected(&app.selectables).is_some() {
+                app.key_input(key).unwrap();
             } else {
                 match key.code {
-                    KeyCode::Up => _ = app.r#move(Direction::Up),
-                    KeyCode::Down => _ = app.r#move(Direction::Down),
-                    KeyCode::Left => _ = app.r#move(Direction::Left),
-                    KeyCode::Right => _ = app.r#move(Direction::Right),
+                    KeyCode::Up => _ = app.r#move(FrameworkDirection::Up),
+                    KeyCode::Down => _ = app.r#move(FrameworkDirection::Down),
+                    KeyCode::Left => _ = app.r#move(FrameworkDirection::Left),
+                    KeyCode::Right => _ = app.r#move(FrameworkDirection::Right),
                     KeyCode::Enter => _ = app.select(),
                     KeyCode::Char('q') => return Ok(()),
                     _ => {}
@@ -133,14 +137,19 @@ impl TextBox {
 impl FrameworkItem for TextBox {
     fn render(
         &mut self,
-        frame: &mut Frame<CrosstermBackend<Stdout>>,
-        _framework: &FrameworkClean,
-        area: ratatui::layout::Rect,
-        selected: bool,
-        hover: bool,
+        frame: &mut Frame,
+        _framework: &mut FrameworkClean,
+        area: Rect,
         _popup_render: bool,
+        info: ItemInfo,
     ) {
-        let border_color = if hover { Color::Red } else if selected { Color::LightBlue } else { Color::Reset };
+        let border_color = if info.hover {
+            Color::Red
+        } else if info.selected {
+            Color::LightBlue
+        } else {
+            Color::Reset
+        };
 
         let block = Block::default()
             .borders(Borders::ALL)
@@ -173,17 +182,34 @@ impl List {
 impl FrameworkItem for List {
     fn render(
         &mut self,
-        frame: &mut Frame<CrosstermBackend<Stdout>>,
-        _framework: &FrameworkClean,
-        area: ratatui::layout::Rect,
-        selected: bool,
-        hover: bool,
+        frame: &mut Frame,
+        _framework: &mut FrameworkClean,
+        area: Rect,
         _popup_render: bool,
+        info: ItemInfo,
     ) {
-        let border_color = if hover { Color::Red } else if selected { Color::LightBlue } else { Color::Reset };
-        let selected_color = if selected { Color::LightYellow } else {Color::Reset};
-        let cursor_color = if selected {Color::LightRed} else {Color::Reset};
-        let style = if selected {Color::LightGreen} else {Color::Reset};
+        let border_color = if info.hover {
+            Color::Red
+        } else if info.selected {
+            Color::LightBlue
+        } else {
+            Color::Reset
+        };
+        let selected_color = if info.selected {
+            Color::LightYellow
+        } else {
+            Color::Reset
+        };
+        let cursor_color = if info.selected {
+            Color::LightRed
+        } else {
+            Color::Reset
+        };
+        let style = if info.selected {
+            Color::LightGreen
+        } else {
+            Color::Reset
+        };
         let block = Block::default()
             .borders(Borders::ALL)
             .title(String::from("Text List"))
@@ -193,13 +219,20 @@ impl FrameworkItem for List {
         frame.render_widget(block, area);
 
         self.textlist.set_height(inner.height);
-        self.textlist.set_selected_style(Style::default().fg(selected_color));
-        self.textlist.set_cursor_style(Style::default().fg(cursor_color));
+        self.textlist
+            .set_selected_style(Style::default().fg(selected_color));
+        self.textlist
+            .set_cursor_style(Style::default().fg(cursor_color));
         self.textlist.set_style(Style::default().fg(style));
         frame.render_widget(self.textlist.clone(), inner);
     }
 
-    fn key_event(&mut self, _framework: FrameworkClean, key: event::KeyEvent) {
+    fn key_event(
+        &mut self,
+        _framework: &mut FrameworkClean,
+        key: KeyEvent,
+        _info: ItemInfo,
+    ) -> Result<(), Box<dyn Error>> {
         match key.code {
             // bit 1 is the shift key modifier, so shift up arrow will go to the first item
             KeyCode::Up if key.modifiers.bits() == 1 => self.textlist.first().unwrap(),
@@ -210,6 +243,8 @@ impl FrameworkItem for List {
             KeyCode::PageDown => self.textlist.pagedown().unwrap(),
             _ => {}
         }
+
+        Ok(())
     }
 }
 
@@ -218,21 +253,21 @@ pub struct KeyPressDisplay;
 
 impl FrameworkItem for KeyPressDisplay {
     fn render(
-            &mut self,
-            frame: &mut Frame<CrosstermBackend<Stdout>>,
-            framework: &FrameworkClean,
-            area: ratatui::layout::Rect,
-            _selected: bool,
-            _hover: bool,
-            _popup_render: bool,
-        ) {
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .title("Key pressed");
-        let paragraph = Paragraph::new(format!("{}", framework.data.get::<KeyLastPressed>().unwrap())).block(block);
+        &mut self,
+        frame: &mut Frame,
+        framework: &mut FrameworkClean,
+        area: Rect,
+        _popup_render: bool,
+        _info: ItemInfo,
+    ) {
+        let block = Block::default().borders(Borders::ALL).title("Key pressed");
+        let paragraph = Paragraph::new(format!(
+            "{}",
+            framework.data.state.get::<KeyLastPressed>().unwrap()
+        ))
+        .block(block);
 
         frame.render_widget(paragraph, area);
-
     }
 
     fn selectable(&self) -> bool {
@@ -240,6 +275,7 @@ impl FrameworkItem for KeyPressDisplay {
     }
 }
 
+#[derive(Clone)]
 pub struct KeyLastPressed(Option<KeyCode>);
 
 impl Key for KeyLastPressed {

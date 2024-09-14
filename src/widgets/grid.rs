@@ -3,7 +3,7 @@ use std::{error::Error, fmt::Display};
 use ratatui::{
     layout::{Constraint, Rect},
     style::Style,
-    symbols::line::Set,
+    symbols::{border::Set, line::CROSS},
     widgets::{BorderType, Widget},
 };
 
@@ -81,7 +81,7 @@ impl Grid {
         Self::lengths(&self.widths, width - 1)
     }
 
-    pub fn lengths(constraints: &Vec<Constraint>, mut length: u16) -> Result<Vec<u16>, GridError> {
+    pub fn lengths(constraints: &[Constraint], mut length: u16) -> Result<Vec<u16>, GridError> {
         if length < constraints.len() as u16 + 1 {
             return Err(GridError::NotEnoughLength);
         }
@@ -127,7 +127,7 @@ impl Grid {
                 return set.top_right;
             }
 
-            return set.horizontal_down;
+            return set.horizontal_bottom;
         }
 
         if is_bottom {
@@ -139,7 +139,7 @@ impl Grid {
                 return set.bottom_right;
             }
 
-            return set.horizontal_up;
+            return set.horizontal_top;
         }
 
         if is_left {
@@ -150,7 +150,7 @@ impl Grid {
             return set.vertical_left;
         }
 
-        set.cross
+        CROSS
     }
 }
 
@@ -188,13 +188,13 @@ impl Widget for Grid {
         let left = vertical_lines.first().unwrap();
         let right = vertical_lines.last().unwrap();
 
-        let set = BorderType::line_symbols(self.border_type);
+        let set = BorderType::border_symbols(self.border_type);
 
         // vertical lines
         for x in vertical_lines.iter() {
             for y in *top..*bottom + 1 {
                 if !horizontal_lines.contains(&y) {
-                    buf.set_string(*x, y, set.vertical, self.border_style);
+                    buf.set_string(*x, y, set.vertical_left, self.border_style);
                 }
             }
         }
@@ -210,7 +210,7 @@ impl Widget for Grid {
                         self.border_style,
                     );
                 } else {
-                    buf.set_string(x, *y, set.horizontal, self.border_style);
+                    buf.set_string(x, *y, set.horizontal_top, self.border_style);
                 }
             }
         }

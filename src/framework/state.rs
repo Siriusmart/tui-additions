@@ -176,7 +176,7 @@ impl CursorState {
         Self::Selected(location.0, location.1)
     }
 
-    pub fn hover(&self, selectables: &Vec<Vec<(usize, usize)>>) -> Option<(usize, usize)> {
+    pub fn hover(&self, selectables: &[Vec<(usize, usize)>]) -> Option<(usize, usize)> {
         match self {
             Self::Hover(x, y) if !selectables.is_empty() => {
                 Some(Self::selectables_to_coors(selectables, (*x, *y)))
@@ -185,7 +185,7 @@ impl CursorState {
         }
     }
 
-    pub fn selected(&self, selectables: &Vec<Vec<(usize, usize)>>) -> Option<(usize, usize)> {
+    pub fn selected(&self, selectables: &[Vec<(usize, usize)>]) -> Option<(usize, usize)> {
         match self {
             Self::Selected(x, y) if !selectables.is_empty() => {
                 Some(Self::selectables_to_coors(selectables, (*x, *y)))
@@ -209,7 +209,7 @@ impl CursorState {
     pub fn r#move(
         &mut self,
         direction: FrameworkDirection,
-        selectables: &Vec<Vec<(usize, usize)>>,
+        selectables: &[Vec<(usize, usize)>],
     ) -> Result<(), FrameworkError> {
         match direction {
             FrameworkDirection::Up => self.up(),
@@ -223,7 +223,7 @@ impl CursorState {
         Ok(())
     }
 
-    fn move_check(&mut self, selectables: &Vec<Vec<(usize, usize)>>) {
+    fn move_check(&mut self, selectables: &[Vec<(usize, usize)>]) {
         if let Self::Hover(x, y) = self {
             if selectables.is_empty() {
                 *x = 0;

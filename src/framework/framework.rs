@@ -1,7 +1,7 @@
-use std::{error::Error, fmt::Display, io::Stdout};
+use std::{error::Error, fmt::Display};
 
 use crossterm::event::KeyEvent;
-use ratatui::{backend::CrosstermBackend, layout::Rect, Frame};
+use ratatui::{layout::Rect, Frame};
 
 use super::{
     CursorState, FrameworkClean, FrameworkData, FrameworkDirection, FrameworkHistory, ItemInfo,
@@ -116,8 +116,8 @@ impl Framework {
     }
 
     /// Render every item to screen
-    pub fn render(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>) {
-        let area = frame.size();
+    pub fn render(&mut self, frame: &mut Frame) {
+        let area = frame.area();
         self.frame_area = Some(area);
 
         let chunks = self.state.get_chunks(area);
@@ -133,7 +133,7 @@ impl Framework {
     /// Render to screen with more controls
     pub fn render_raw(
         &mut self,
-        frame: &mut Frame<CrosstermBackend<Stdout>>,
+        frame: &mut Frame,
         chunks: &[Vec<Rect>],
         selected: Option<(usize, usize)>,
         hover: Option<(usize, usize)>,
@@ -164,8 +164,8 @@ impl Framework {
     }
 
     /// Render only one item
-    pub fn render_only(&mut self, frame: &mut Frame<CrosstermBackend<Stdout>>, x: usize, y: usize) {
-        let chunk = self.state.get_chunks(frame.size())[y][x];
+    pub fn render_only(&mut self, frame: &mut Frame, x: usize, y: usize) {
+        let chunk = self.state.get_chunks(frame.area())[y][x];
 
         let selected = self.cursor.selected(&self.selectables);
         let hover = self.cursor.hover(&self.selectables);
@@ -177,12 +177,8 @@ impl Framework {
     /// Render multiple items
     ///
     /// Location is in a format of `Vec<(x, y)>`
-    pub fn render_only_multiple(
-        &mut self,
-        frame: &mut Frame<CrosstermBackend<Stdout>>,
-        locations: &[(usize, usize)],
-    ) {
-        let chunks = self.state.get_chunks(frame.size());
+    pub fn render_only_multiple(&mut self, frame: &mut Frame, locations: &[(usize, usize)]) {
+        let chunks = self.state.get_chunks(frame.area());
 
         let selected = self.cursor.selected(&self.selectables);
         let hover = self.cursor.hover(&self.selectables);
@@ -199,7 +195,7 @@ impl Framework {
     /// Render only with more controls
     pub fn render_only_raw(
         &mut self,
-        frame: &mut Frame<CrosstermBackend<Stdout>>,
+        frame: &mut Frame,
         x: usize,
         y: usize,
         chunk: Rect,

@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tui-additions = {version = "0.1.0", default-features = false, features = ["framework", "widgets"]}
-tui = "0.18"
+tui-additions = { path = "../../", default-features = false, features = ["framework", "widgets"]}
+ratatui = "0.28"
 typemap = "0.3"
-crossterm = "0.24"
+crossterm = "0.28"
