@@ -3,7 +3,7 @@ use std::{error::Error, fmt::Display};
 use ratatui::{
     layout::{Constraint, Rect},
     style::Style,
-    symbols::{border::Set, line::CROSS},
+    symbols::line::{self, Set, CROSS},
     widgets::{BorderType, Widget},
 };
 
@@ -127,7 +127,7 @@ impl Grid {
                 return set.top_right;
             }
 
-            return set.horizontal_bottom;
+            return set.horizontal_down;
         }
 
         if is_bottom {
@@ -139,7 +139,7 @@ impl Grid {
                 return set.bottom_right;
             }
 
-            return set.horizontal_top;
+            return set.horizontal_up;
         }
 
         if is_left {
@@ -188,13 +188,19 @@ impl Widget for Grid {
         let left = vertical_lines.first().unwrap();
         let right = vertical_lines.last().unwrap();
 
-        let set = BorderType::border_symbols(self.border_type);
+        let set = match self.border_type {
+            BorderType::Plain => line::NORMAL,
+            BorderType::Thick => line::THICK,
+            BorderType::Double => line::DOUBLE,
+            BorderType::Rounded => line::ROUNDED,
+            _ => panic!("no such line type"),
+        };
 
         // vertical lines
         for x in vertical_lines.iter() {
             for y in *top..*bottom + 1 {
                 if !horizontal_lines.contains(&y) {
-                    buf.set_string(*x, y, set.vertical_left, self.border_style);
+                    buf.set_string(*x, y, set.vertical, self.border_style);
                 }
             }
         }
@@ -210,7 +216,7 @@ impl Widget for Grid {
                         self.border_style,
                     );
                 } else {
-                    buf.set_string(x, *y, set.horizontal_top, self.border_style);
+                    buf.set_string(x, *y, set.horizontal, self.border_style);
                 }
             }
         }
