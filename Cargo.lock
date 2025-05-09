@@ -540,7 +540,7 @@ checksum = "04a79e25382e2e852e8da874249358d382ebaf259d0d34e75d8db16a7efabbc7"
 
 [[package]]
 name = "tui-additions"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "crossterm 0.29.0",
  "dyn-clone",
