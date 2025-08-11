@@ -2,7 +2,7 @@ use super::{FrameworkClean, ItemInfo};
 use crossterm::event::KeyEvent;
 use dyn_clone::DynClone;
 use ratatui::{layout::Rect, Frame};
-use std::{any::Any, error::Error};
+use std::{any::Any, collections::HashMap, error::Error};
 
 /// Trait every item on `State` should implment
 ///
@@ -60,6 +60,10 @@ pub trait FrameworkItem: DynClone + Any {
         absolute_x: u16,
         absolute_y: u16,
     ) -> bool {
+        false
+    }
+
+    fn message(&mut self, framework: &mut FrameworkClean, data: HashMap<String, Box<dyn Any>>) -> bool {
         false
     }
 }

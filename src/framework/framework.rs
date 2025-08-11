@@ -1,4 +1,4 @@
-use std::{error::Error, fmt::Display};
+use std::{any::Any, collections::HashMap, error::Error, fmt::Display};
 
 use crossterm::event::KeyEvent;
 use ratatui::{layout::Rect, Frame};
@@ -280,6 +280,21 @@ impl Framework {
         self.deselect().ok();
         self.cursor = CursorState::default();
         true
+    }
+
+    /// Send message to selected object, returns true if anything updated
+    pub fn message(&mut self, data: HashMap<String, Box<dyn Any>>) -> bool {
+        let selected = self.cursor.selected(&self.selectables);
+        let (mut frameworkclean, state) = self.split_clean();
+
+        if let Some((x, y)) = selected {
+            return state.get_mut(x, y).message(
+                &mut frameworkclean,
+                data
+            );
+        }
+
+        false
     }
 
     pub fn load(&mut self) -> Result<(), Box<dyn Error>> {
