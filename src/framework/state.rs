@@ -1,3 +1,5 @@
+use crate::utils;
+
 use super::{FrameworkError, FrameworkItem};
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 
@@ -71,7 +73,7 @@ impl State {
                             - row
                                 .items
                                 .iter()
-                                .map(|item| item.width.apply(area.width))
+                                .map(|item| utils::constraint_apply(item.width, area.width))
                                 .sum::<u16>())
                             / 2,
                     )

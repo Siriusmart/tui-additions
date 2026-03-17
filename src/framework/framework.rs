@@ -247,8 +247,8 @@ impl Framework {
         };
 
         // loops over selectable items only
-        for (row_no, row_selectables) in self.selectables.iter().enumerate() {
-            for (col_no, &(x, y)) in row_selectables.iter().enumerate() {
+        for (y, row_items) in self.state.0.iter().enumerate() {
+            for x in 0..row_items.items.len() {
                 let chunk = chunks[y][x];
                 // guard gate to only do stuff if clicking on item
                 if !chunk.intersects(Rect::new(col, row, 1, 1)) {
@@ -256,10 +256,29 @@ impl Framework {
                 }
 
                 // pass click event to item only if it is already selected
-                if self.cursor.selected(&self.selectables) == Some((col_no, row_no)) {
+                if self.cursor.selected(&self.selectables) == Some((x, y)) {
                     let (mut clean, state) = self.split_clean();
-                    return state.get_mut(x, y).mouse_event(
+                    let a = state.get_mut(x, y).mouse_passthrough(
                         &mut clean,
+                        true,
+                        col - chunk.x,
+                        row - chunk.y,
+                        col,
+                        row,
+                    );
+                    let b = state.get_mut(x, y).mouse_event(
+                        &mut clean,
+                        col - chunk.x,
+                        row - chunk.y,
+                        col,
+                        row,
+                    );
+                    return a || b;
+                } else {
+                    let (mut clean, state) = self.split_clean();
+                    state.get_mut(x, y).mouse_passthrough(
+                        &mut clean,
+                        false,
                         col - chunk.x,
                         row - chunk.y,
                         col,
@@ -267,12 +286,25 @@ impl Framework {
                     );
                 }
 
-                if self.cursor.hover(&self.selectables) == Some((col_no, row_no)) {
+                if self.cursor.hover(&self.selectables) == Some((x, y)) {
                     return self.select().is_ok();
                 }
 
-                self.deselect().ok();
-                self.cursor = CursorState::to_hover((col_no, row_no));
+                let mut selectable_index = None;
+
+                for (sel_row, row_items) in self.selectables.iter().enumerate() {
+                    for (sel_col, (x2, y2)) in row_items.iter().enumerate() {
+                        if (x2, y2) == (&x, &y) {
+                            selectable_index = Some((sel_col, sel_row))
+                        }
+                    }
+                }
+
+                if let Some(sel_index) = selectable_index {
+                    self.deselect().ok();
+                    self.cursor = CursorState::to_hover(sel_index);
+                }
+
                 return true;
             }
         }
@@ -288,10 +320,7 @@ impl Framework {
         let (mut frameworkclean, state) = self.split_clean();
 
         if let Some((x, y)) = selected {
-            return state.get_mut(x, y).message(
-                &mut frameworkclean,
-                data
-            );
+            return state.get_mut(x, y).message(&mut frameworkclean, data);
         }
 
         false
@@ -356,7 +385,7 @@ impl Framework {
 
 impl Framework {
     /// Split `Framework` into `FrameworkClean` and `&mut State`
-    pub fn split_clean(&mut self) -> (FrameworkClean, &mut State) {
+    pub fn split_clean(&mut self) -> (FrameworkClean<'_>, &mut State) {
         self.into()
     }
 }

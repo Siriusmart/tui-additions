@@ -7,6 +7,8 @@ use ratatui::{
     widgets::{BorderType, Widget},
 };
 
+use crate::utils;
+
 #[derive(Clone)]
 pub struct Grid {
     pub widths: Vec<Constraint>,
@@ -90,7 +92,7 @@ impl Grid {
 
         let mut lengths = constraints
             .iter()
-            .map(|constraint| constraint.apply(length))
+            .map(|constraint| utils::constraint_apply(*constraint, length))
             .collect::<Vec<_>>();
         let sum: u16 = lengths.iter().sum();
 

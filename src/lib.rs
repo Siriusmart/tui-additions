@@ -14,5 +14,7 @@ pub mod widgets;
 #[cfg(feature = "framework")]
 pub mod framework;
 
+pub mod utils;
+
 #[cfg(test)]
 mod tests;

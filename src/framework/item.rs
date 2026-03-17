@@ -63,7 +63,24 @@ pub trait FrameworkItem: DynClone + Any {
         false
     }
 
-    fn message(&mut self, framework: &mut FrameworkClean, data: HashMap<String, Box<dyn Any>>) -> bool {
+    /// mouse passthrough is an event that runs before mouse event
+    fn mouse_passthrough(
+        &mut self,
+        framework: &mut FrameworkClean,
+        selected: bool,
+        x: u16,
+        y: u16,
+        absolute_x: u16,
+        absolute_y: u16,
+    ) -> bool {
+        false
+    }
+
+    fn message(
+        &mut self,
+        framework: &mut FrameworkClean,
+        data: HashMap<String, Box<dyn Any>>,
+    ) -> bool {
         false
     }
 }
